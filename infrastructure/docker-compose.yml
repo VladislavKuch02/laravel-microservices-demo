@@ -1,0 +1,118 @@
+services:
+  auth-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_auth-app
+    working_dir: /var/www
+    volumes:
+      - ../services/auth:/var/www
+    command: ["php-fpm", "-F"]
+    networks:
+      - laravel
+  analytics-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_auth-analytics
+    working_dir: /var/www
+    volumes:
+      - ../services/analytics:/var/www
+    command: ["php-fpm", "-F"]
+    networks:
+      - laravel
+    
+  order-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_auth-order
+    working_dir: /var/www
+    volumes:
+      - ../services/order:/var/www
+    command: ["php-fpm", "-F"]
+    networks:
+      - laravel
+
+  webserver:
+    image: nginx:alpine
+    container_name: laravel_nginx
+    ports:
+      - "8081:8081"  # Auth
+      - "8082:8082"  # Order
+      - "8083:8083"  # Analytics
+    volumes:
+      - ../services/auth:/var/www/auth
+      - ../services/order:/var/www/order
+      - ../services/analytics:/var/www/analytics
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - auth-app
+      - order-app
+      - analytics-app
+    networks:
+      - laravel
+
+  db:
+    image: arm64v8/postgres:15
+    container_name: laravel_db
+    restart: always
+    environment:
+      POSTGRES_DB: laravel
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: 22822vo7
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - laravel
+  redis:
+    image: redis:7-alpine
+    container_name: laravel_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel
+  memcached:
+    image: memcached:alpine
+    container_name: laravel_memcached
+    restart: always
+    ports:
+      - "11211:11211"
+    networks:
+      - laravel
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: laravel_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # основной порт для приложений
+      - "15672:15672" # панель управления RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: laravel
+      RABBITMQ_DEFAULT_PASS: 22822vo7
+    networks:
+      - laravel
+
+  clickhouse:
+    image: altinity/clickhouse-server:23.3.13.7.altinitystable
+    container_name: laravel_clickhouse
+    platform: linux/arm64/v8   # ✅ добавь эту строку
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - ./clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
