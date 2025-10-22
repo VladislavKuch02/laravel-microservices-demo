@@ -53,18 +53,46 @@ services:
     networks:
       - laravel
 
-  db:
+  auth-db:
     image: arm64v8/postgres:15
-    container_name: laravel_db
+    container_name: auth_db
     restart: always
     environment:
-      POSTGRES_DB: laravel
+      POSTGRES_DB: auth-db
       POSTGRES_USER: laravel
       POSTGRES_PASSWORD: 22822vo7
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - ./auth-pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - laravel
+  analytics-db:
+    image: arm64v8/postgres:15
+    container_name: analytics_db
+    restart: always
+    environment:
+      POSTGRES_DB: analytics-db
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: 22822vo7
+    volumes:
+      - ./analytics-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - laravel
+  order-db:
+    image: arm64v8/postgres:15
+    container_name: order_db
+    restart: always
+    environment:
+      POSTGRES_DB: order-db
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: 22822vo7
+    volumes:
+      - ./order-pgdata:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
     networks:
       - laravel
   redis:
@@ -110,6 +138,8 @@ services:
       nofile:
         soft: 262144
         hard: 262144
+    depends_on:
+      - webserver
     networks:
       - laravel
 
