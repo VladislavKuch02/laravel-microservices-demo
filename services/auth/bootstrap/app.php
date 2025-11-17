@@ -15,7 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Для API
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\CheckTokenExpiration::class
         ]);
+    })
+    ->withSchedule(function (Illuminate\Console\Scheduling\Schedule $schedule) {
+        $schedule->command('tokens:clean')->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -23,11 +23,12 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password'])
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', expiresAt: now()->addHours(12))->plainTextToken;
 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'expires_at' => $token->accessToken->expires_at
         ], 201);
     }
 
@@ -45,12 +46,13 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', expiresAt: now()->addHours(12))->plainTextToken;
 
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-        ]);
+            'expires_at' => $token->accessToken->expires_at
+        ], 201);
     }
 
     // Текущий пользователь (с кэшем)
@@ -69,7 +71,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-
         return response()->json(['message' => 'Logged out successfully']);
     }
 }
